@@ -5,7 +5,7 @@ Usage
 -----
 
 1.  Replace `ip` and `name` with your own.
-2.  `node smtp`
+2.  `node smtp.js`
 3.  Send an email to test@`ip`
 
 Notice
