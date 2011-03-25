@@ -21,10 +21,10 @@ Node Email Parser
 Usage
 -----
 
-  var parse = require( 'lib/parse.js' ),
-      email = parse.email( rawEmail );
+    var parse = require( 'lib/parse.js' ),
+        email = parse.email( rawEmail );
 
-  console.log( email.headers.contentType );
+    console.log( email.headers.contentType );
 
 Examples are provided in the `test` folder.
 `node test-parse.js Gmail`
