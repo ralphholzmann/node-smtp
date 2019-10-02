@@ -12,7 +12,6 @@ var net         = require( 'net' ),
             'EHLO' : [
               '250-' + IP + ' OH HAI <var>',
               '250-SIZE 35651584',
-              '250-PIPELINING',
               '250-ENHANCEDSTATUSCODES',
               '250 8BITMIME'
             ].join( eol ),
