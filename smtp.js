@@ -1,17 +1,17 @@
 var net         = require( 'net' ),
     fs          = require( 'fs' ),
-    ip          = '74.207.234.151',
-    name        = 'Send to Dropbox',
-    port        = 25,
-    smtp = (function( ip, name ) {
-
+    IP          = '74.207.234.151',
+    PTR         = 'reverse-dns-for-74.207.234.151',
+    NAME        = 'node-smtp',
+    DOMAIN      = 'yourdomain.com',
+    PORT        = 25,
+    smtp = (function() {
       var eol       = "\r\n",
           commands  = {
-            'OPEN' : '220 ' + ip + ' ESMTP ' + name,  
+            'OPEN' : '220 ' + PTR + '(' + IP + ') ESMTP ' + NAME,
             'EHLO' : [
-              '250-' + ip + ' OH HAI <var>',
+              '250-' + IP + ' OH HAI <var>',
               '250-SIZE 35651584',
-              '250-PIPELINING',
               '250-ENHANCEDSTATUSCODES',
               '250 8BITMIME'
             ].join( eol ),
@@ -20,27 +20,28 @@ var net         = require( 'net' ),
             'RCPT' : '250 Ok',
             'DATA' : '354 End data with <CR><LF>.<CR><LF>',
             '.'    : '250 OK id=1778te-0009TT-00',
-            'QUIT' : '221 Peace Out'
+            'QUIT' : '221 Peace Out',
+            'NORELAY': '550 Relay Denied'
           };
-     
+
       function sendResponse( socket, command, arg ) {
-    
+
         var response = commands[ command ];
-    
+
         if ( arg ) {
           response = response.replace( '<var>', arg );
         }
         console.log( 'S: ' + response );
         socket.write( response + eol );
-    
+
       };
-    
+
       return {
         sendResponse  : sendResponse,
         commands      : commands
       };
-    
-    })( ip ),
+
+    })( IP ),
     server      = function( socket ) {
 
       var email = "",
@@ -65,10 +66,26 @@ var net         = require( 'net' ),
 
         // Check for a command
         if ( smtp.commands[ command ] ) {
-          smtp.sendResponse( socket, command, parts[1] );
-        // Check for end of email
+          var isHandled = false;
+          switch (command) {
+            case 'RCPT':
+              if (!parts[1].includes('@' + DOMAIN + '>')) {
+                smtp.sendResponse( socket, 'NORELAY');
+                isHandled = true;
+              }
+              break;
+            default:
+              // no other special case
+          }
+
+
+          if (!isHandled) {
+            smtp.sendResponse( socket, command, parts[1] );
+          }
+
+          // Check for end of email
         } else if ( data.substr(-5) == "\r\n.\r\n" ) {
-          email += data.substring(0, data.length - 5); 
+          email += data.substring(0, data.length - 5);
           smtp.sendResponse( socket, '.' );
         // Build email
         } else {
@@ -77,7 +94,7 @@ var net         = require( 'net' ),
 
         clearTimeout( timeout );
         timeout = setTimeout(function(){
-          smtp.sendResponse(socket, 'MAIL'); 
+          smtp.sendResponse(socket, 'MAIL');
         }, 10000);
       });
 
@@ -88,6 +105,8 @@ var net         = require( 'net' ),
         // Do something with the email here
       });
 
+      // send initial response for servers that are shy
+      smtpServer.sendResponse(socket, 'OPEN');
     },
     smtpServer  = net.createServer( server );
 
@@ -96,4 +115,4 @@ console.log( 'Starting email server' );
 // C: are client commands
 // S: are server commands.
 
-smtpServer.listen( port, ip );
+smtpServer.listen( PORT, IP );
