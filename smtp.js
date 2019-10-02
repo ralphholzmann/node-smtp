@@ -1,16 +1,16 @@
 var net         = require( 'net' ),
     fs          = require( 'fs' ),
-    ip          = '74.207.234.151',
-    ptr         = 'reverse-dns-for-74.207.234.151',
-    name        = 'Send to Dropbox',
-    domain      = 'yourdomain.com',
-    port        = 25,
+    IP          = '74.207.234.151',
+    PTR         = 'reverse-dns-for-74.207.234.151',
+    NAME        = 'node-smtp',
+    DOMAIN      = 'yourdomain.com',
+    PORT        = 25,
     smtp = (function() {
       var eol       = "\r\n",
           commands  = {
-            'OPEN' : '220 ' + ptr + '(' + ip + ') ESMTP ' + name,
+            'OPEN' : '220 ' + PTR + '(' + IP + ') ESMTP ' + NAME,
             'EHLO' : [
-              '250-' + ip + ' OH HAI <var>',
+              '250-' + IP + ' OH HAI <var>',
               '250-SIZE 35651584',
               '250-PIPELINING',
               '250-ENHANCEDSTATUSCODES',
@@ -42,7 +42,7 @@ var net         = require( 'net' ),
         commands      : commands
       };
 
-    })( ip ),
+    })( IP ),
     server      = function( socket ) {
 
       var email = "",
@@ -67,18 +67,24 @@ var net         = require( 'net' ),
 
         // Check for a command
         if ( smtp.commands[ command ] ) {
-          if (command === 'RCPT') {
-            // check for domain matching
-            if (!parts[1].includes('@' + domain + '>')) {
-              smtp.sendResponse( socket, 'NORELAY');
-            } else {
-              smtp.sendResponse( socket, command, parts[1] );
-            }
-          } else {
-            // Any other command
+          var isHandled = false;
+          switch (command) {
+            case 'RCPT':
+              if (!parts[1].includes('@' + DOMAIN + '>')) {
+                smtp.sendResponse( socket, 'NORELAY');
+                isHandled = true;
+              }
+              break;
+            default:
+              // no other special case
+          }
+
+
+          if (!isHandled) {
             smtp.sendResponse( socket, command, parts[1] );
           }
-        // Check for end of email
+
+          // Check for end of email
         } else if ( data.substr(-5) == "\r\n.\r\n" ) {
           email += data.substring(0, data.length - 5);
           smtp.sendResponse( socket, '.' );
@@ -100,7 +106,7 @@ var net         = require( 'net' ),
         // Do something with the email here
       });
 
-      // send initial response
+      // send initial response for servers that are shy
       smtpServer.sendResponse(socket, 'OPEN');
     },
     smtpServer  = net.createServer( server );
@@ -110,4 +116,4 @@ console.log( 'Starting email server' );
 // C: are client commands
 // S: are server commands.
 
-smtpServer.listen( port, ip );
+smtpServer.listen( PORT, IP );
