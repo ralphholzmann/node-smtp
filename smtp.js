@@ -1,13 +1,13 @@
 var net         = require( 'net' ),
     fs          = require( 'fs' ),
     ip          = '74.207.234.151',
+    ptr         = 'reverse-dns-for-74.207.234.151',
     name        = 'Send to Dropbox',
     port        = 25,
     smtp = (function( ip, name ) {
-
       var eol       = "\r\n",
           commands  = {
-            'OPEN' : '220 ' + ip + ' ESMTP ' + name,  
+            'OPEN' : '220 ' + ptr + '(' + ip + ') ESMTP ' + name,
             'EHLO' : [
               '250-' + ip + ' OH HAI <var>',
               '250-SIZE 35651584',
@@ -22,24 +22,24 @@ var net         = require( 'net' ),
             '.'    : '250 OK id=1778te-0009TT-00',
             'QUIT' : '221 Peace Out'
           };
-     
+
       function sendResponse( socket, command, arg ) {
-    
+
         var response = commands[ command ];
-    
+
         if ( arg ) {
           response = response.replace( '<var>', arg );
         }
         console.log( 'S: ' + response );
         socket.write( response + eol );
-    
+
       };
-    
+
       return {
         sendResponse  : sendResponse,
         commands      : commands
       };
-    
+
     })( ip ),
     server      = function( socket ) {
 
@@ -68,7 +68,7 @@ var net         = require( 'net' ),
           smtp.sendResponse( socket, command, parts[1] );
         // Check for end of email
         } else if ( data.substr(-5) == "\r\n.\r\n" ) {
-          email += data.substring(0, data.length - 5); 
+          email += data.substring(0, data.length - 5);
           smtp.sendResponse( socket, '.' );
         // Build email
         } else {
@@ -77,7 +77,7 @@ var net         = require( 'net' ),
 
         clearTimeout( timeout );
         timeout = setTimeout(function(){
-          smtp.sendResponse(socket, 'MAIL'); 
+          smtp.sendResponse(socket, 'MAIL');
         }, 10000);
       });
 
@@ -88,6 +88,8 @@ var net         = require( 'net' ),
         // Do something with the email here
       });
 
+      // send initial response
+      smtpServer.sendResponse(socket, 'OPEN');
     },
     smtpServer  = net.createServer( server );
 
