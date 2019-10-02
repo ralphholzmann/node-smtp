@@ -6,7 +6,7 @@ Usage
 
 1.  Replace `IP` and `NAME` with your own.
 1.  Perform a reverse-lookup of your IP, and store the value in `PRR`
-1.  Provide domains you will accept mails from in `DOMAIN`. Any other domains provided will be rejected, closing a potential Open Relay exploit.
+1.  Provide domain you will accept mails from in `DOMAIN`. Any other domain provided by a client will be rejected, closing a potential Open Relay exploit.
 1.  `node smtp.js` (you may have to `sudo`)
 1.  Send an email to test@`ip`, or to the domain resolved by your MX record.
 
