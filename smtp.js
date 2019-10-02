@@ -3,8 +3,9 @@ var net         = require( 'net' ),
     ip          = '74.207.234.151',
     ptr         = 'reverse-dns-for-74.207.234.151',
     name        = 'Send to Dropbox',
+    domain      = 'yourdomain.com',
     port        = 25,
-    smtp = (function( ip, name ) {
+    smtp = (function() {
       var eol       = "\r\n",
           commands  = {
             'OPEN' : '220 ' + ptr + '(' + ip + ') ESMTP ' + name,
@@ -20,7 +21,8 @@ var net         = require( 'net' ),
             'RCPT' : '250 Ok',
             'DATA' : '354 End data with <CR><LF>.<CR><LF>',
             '.'    : '250 OK id=1778te-0009TT-00',
-            'QUIT' : '221 Peace Out'
+            'QUIT' : '221 Peace Out',
+            'NORELAY': '550 Relay Denied'
           };
 
       function sendResponse( socket, command, arg ) {
@@ -65,7 +67,17 @@ var net         = require( 'net' ),
 
         // Check for a command
         if ( smtp.commands[ command ] ) {
-          smtp.sendResponse( socket, command, parts[1] );
+          if (command === 'RCPT') {
+            // check for domain matching
+            if (!parts[1].includes('@' + domain + '>')) {
+              smtp.sendResponse( socket, 'NORELAY');
+            } else {
+              smtp.sendResponse( socket, command, parts[1] );
+            }
+          } else {
+            // Any other command
+            smtp.sendResponse( socket, command, parts[1] );
+          }
         // Check for end of email
         } else if ( data.substr(-5) == "\r\n.\r\n" ) {
           email += data.substring(0, data.length - 5);
